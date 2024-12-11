@@ -53,13 +53,16 @@ bool collisionCheck(int row, int col);
 void trackingEthan(int level);
 void updatingEnemyPos(int EnemyPosX, int EnemyPosY, int enemyNumber);
 bool enemyCollision(int PosY,int PosX);
+bool ethanCollision(int PosY, int PosX);
 
 int main(){
-    int level = 1;
+    int level = 5;
     initializeRandomMap();
     // displayTitle();                 //Called to display the title of the game
     // displayMenu();                  //Called to display the menu
+    level5Obstacles(map);
     initializeEnemies(map, level);
+    ethan(map);
     PrintMap();
 }
 
@@ -276,9 +279,11 @@ void ethan(char arr[][col_size])
 	int rowstart = m, rowend = n;
 	int colstart = 3, colend = col_size - 3;
 	
+    do{
 	x = rowstart + rand() % (rowend - rowstart + 1);
 	y = colstart + rand() % (colend - colstart + 1);
-	for (int row = 0; row < row_size; row++)
+    } while (ethanCollision(y, x));
+    for (int row = 0; row < row_size; row++)
 	{
 		for (int col = 0; col < col_size; col++)
 		{
@@ -697,5 +702,14 @@ void initializeRandomMap(){
     }
     else{
         cout << "Error in random map generation \n";
+    }
+}
+
+bool ethanCollision(int PosY, int PosX){
+    if((collisionCheck(PosY,PosX)) && (collisionCheck(PosY-1,PosX)) && (collisionCheck(PosY,PosX-1)) && (collisionCheck(PosY,PosX+1)) && (collisionCheck(PosY,PosX-1)) && (collisionCheck(PosY+1,PosX-1)) && (collisionCheck(PosY+1,PosX+1))){
+        return false;
+    }
+    else{
+        return true;
     }
 }
