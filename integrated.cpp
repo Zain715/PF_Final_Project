@@ -7,7 +7,7 @@
   
 
 #include <iostream>
-//#include <Windows.h> //for CLS
+#include <Windows.h> //for CLS
 #include <stdlib.h>  //for coloured output
 #include <conio.h>  //to take input from keyboard
 #include <ctime>    // to get the current time in seconds for randomisation
@@ -57,6 +57,8 @@ bool ethanCollision(int PosY, int PosX);
 
 int main(){
     int level = 5;
+    srand(time(0));
+    char direction = ' ';
     initializeRandomMap();
     // displayTitle();                 //Called to display the title of the game
     // displayMenu();                  //Called to display the menu
@@ -64,6 +66,14 @@ int main(){
     initializeEnemies(map, level);
     ethan(map);
     PrintMap();
+    while(true){
+        direction = getch();
+        direction = tolower(direction);
+        move(map, direction);
+        system("clear");
+        PrintMap();
+        sleep(500);
+    }
 }
 
 //Prints the title screen with the game's name
@@ -241,11 +251,11 @@ No return value.
 
 //         keyhit = getch() ;
 
-//         if ((keyhit == KEY_DOWN) && (choice < 3) ) // to validate any change upon pressing the down key when in main menu
+//         if ((keyhit == AmmarDownBad) && (choice < 3) ) // to validate any change upon pressing the down key when in main menu
 //         {
 //             choice++ ;
 //         }
-//         if ((keyhit == KEY_UP) && (choice > 1) ) // to validate any change upon pressing the up key when in main menu
+//         if ((keyhit == AmmarUpBad) && (choice > 1) ) // to validate any change upon pressing the up key when in main menu
 //         {   
 //             choice-- ;
 //         }
@@ -280,8 +290,8 @@ void ethan(char arr[][col_size])
 	int colstart = 3, colend = col_size - 3;
 	
     do{
-	x = rowstart + rand() % (rowend - rowstart + 1);
-	y = colstart + rand() % (colend - colstart + 1);
+	y = rowstart + rand() % (rowend - rowstart + 1);
+	x = colstart + rand() % (colend - colstart + 1);
     } while (ethanCollision(y, x));
     for (int row = 0; row < row_size; row++)
 	{
@@ -300,140 +310,148 @@ void ethan(char arr[][col_size])
 
 
 
-void initializeMap1(char map[][col_size]){
-    // Removing all garbage values
-    for (int i = 0; i < row_size;i++){
-        for (int j = 0; j < col_size;j++){
-            map[i][j] = ' ';
+void initializeMap1(char map[][col_size])
+{
+    for (int row = 0; row < row_size; row++)
+    {
+        for (int col = 0; col < col_size; col++)
+        {
+            map[row][col] = ' '; //removing all garbage values
+            if (col == 0 || col == col_size - 1) //adding borders to columns
+            {
+                map[row][col] = '|';
+            }
+            else if (row == 0 || row == row_size - 1) //adding borders to rows
+            {
+                map[row][col] = '-';
+            }
+            int midCol = (col_size / 2) - 5;
+            for (int col = midCol; col < midCol + 8; col++) //for adding doors on the top and bottom
+            {
+                if (row == 0 || row == row_size - 1)
+                {
+                    map[row][col] = ' ';
+                }
+            }
+
         }
-    }
-    //Adding border to columns
-    for (int j = 0; j < col_size;j++){
-        map[0][j] = '-';
-        map[row_size - 1][j] = '-';
-    }
-    //Adding border to rows
-    for (int j = 0; j < row_size;j++){
-        map[j][0] = '|';
-        map[j][col_size - 1] = '|';
-    }
-    // Adding doors on the top and bottom
-    int midCol = (col_size / 2) - 5;
-    for (int j = midCol; j < midCol + 8;j++){
-        map[0][j] = ' ';
-        map[row_size - 1][j] = ' ';
     }
 }
 
-void initializeMap2(char map[][col_size]){
-     // Removing all garbage values
-    for (int i = 0; i < row_size;i++){
-        for (int j = 0; j < col_size;j++){
-            map[i][j] = ' ';
+void initializeMap2(char map[][col_size])
+{
+    for (int row = 0; row < row_size; row++)
+    {
+        for (int col = 0; col < col_size; col++)
+        {
+            map[row][col] = ' '; //removing all garbage values
+            if (col == 0 || col == col_size - 1) //adding borders to columns
+            {
+                map[row][col] = '|';
+            }
+            else if (row == 0 || row == row_size - 1) //adding borders to rows
+            {
+                map[row][col] = '-';
+            }
+            int midRow = (row_size / 2) - 5;
+            for (int row = midRow; row < midRow + 8; row++) //adding doors on the top and bottom
+            {
+                if (col == 0 || col == col_size - 1)
+                {
+                    map[row][col] = ' ';
+                }
+            }
         }
     }
-    //Adding border to columns
-    for (int j = 0; j < col_size;j++){
-        map[0][j] = '-';
-        map[row_size - 1][j] = '-';
-    }
-    //Adding border to rows
-    for (int j = 0; j < row_size;j++){
-        map[j][0] = '|';
-        map[j][col_size - 1] = '|';
-    }
-    // Adding doors on the ledt and right
-    int midRow = (row_size / 2) - 5;
-    for (int j = midRow; j < midRow + 8;j++){
-        map[j][0] = ' ';
-        map[j][col_size - 1] = ' ';
-    }
+
 }
 
+// ethans movement 
 void move(char arr[][col_size], char& direction)
 {
-	switch (direction)
-	{
-	case 'w': // to move up
-		if (x > 2) // // prevent out-of-bounds
-		{
-			arr[x][y] = ' '; // clearing current position
-			arr[x][y - 1] = ' ';
-			arr[x][y + 1] = ' ';
-			arr[x - 1][y] = ' ';
-			arr[x + 1][y - 1] = ' ';
-			arr[x + 1][y + 1] = ' ';
-			x--; // move one row up 
-			arr[x][y] = '|';  // ethan at the new position
-			arr[x][y - 1] = '/';
-			arr[x][y + 1] = '\\';
-			arr[x - 1][y] = 'O';
-			arr[x + 1][y - 1] = '/';
-			arr[x + 1][y + 1] = '\\';
-		}
-		break;
-	case 's':
-		if (x < row_size - 3)
-		{
-			arr[x][y] = ' '; // clearing current position
-			arr[x][y - 1] = ' ';
-			arr[x][y + 1] = ' ';
-			arr[x - 1][y] = ' ';
-			arr[x + 1][y - 1] = ' ';
-			arr[x + 1][y + 1] = ' ';
-			x++; // move down one row
-			arr[x][y] = '|'; // ethan at the new position
-			arr[x][y - 1] = '/';
-			arr[x][y + 1] = '\\';
-			arr[x - 1][y] = 'O';
-			arr[x + 1][y - 1] = '/';
-			arr[x + 1][y + 1] = '\\';
-		}
-		break;
-	case 'a':
-		if (y > 2)
-		{
-			arr[x][y] = ' '; // clearing current position
-			arr[x][y - 1] = ' ';
-			arr[x][y + 1] = ' ';
-			arr[x - 1][y] = ' ';
-			arr[x + 1][y - 1] = ' ';
-			arr[x + 1][y + 1] = ' ';
-			y--; // move left one column
-			arr[x][y] = '|'; // ethan at the new position
-			arr[x][y - 1] = '/';
-			arr[x][y + 1] = '\\';
-			arr[x - 1][y] = 'O';
-			arr[x + 1][y - 1] = '/';
-			arr[x + 1][y + 1] = '\\';
-		}
-		break;
-	case 'd':
-		if (y < col_size - 3)
-		{
-			arr[x][y] = ' '; // clearing current position
-			arr[x][y - 1] = ' ';
-			arr[x][y + 1] = ' ';
-			arr[x - 1][y] = ' ';
-			arr[x + 1][y - 1] = ' ';
-			arr[x + 1][y + 1] = ' ';
-			y++; // move right one column
-			arr[x][y] = '|'; // ethan at the new position
-			arr[x][y - 1] = '/';
-			arr[x][y + 1] = '\\';
-			arr[x - 1][y] = 'O';
-			arr[x + 1][y - 1] = '/';
-			arr[x + 1][y + 1] = '\\';
-		}
-		break;
-	case 'q':
-		exit(0);
-		break;
-	default:
-		cout << "Invalid key. Use W, A, S, D to move or Q to quit." << endl;
-		break;
-	}
+    switch (direction)
+    {
+    case 'w': // to move up
+        if (x > 2 && arr[x - 2][y] == ' ' && arr[x - 1][y - 1] == ' ' && arr[x - 1][y + 1] == ' ')// // prevent out-of-bounds
+        {
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            x--; // move one row up 
+            arr[x][y] = '|';  // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
+        }
+        break;
+    case 's':
+        if (x < row_size - 3 && arr[x + 2][y + 1] == ' ' && arr[x + 2][y - 1] == ' ' && arr[x + 1][y] == ' ')
+        {
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            x++; // move down one row
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
+        }
+        break;
+    case 'a':
+        if (y > 2 && arr[x][y - 2] == ' ' && arr[x + 1][y - 2] == ' ' && arr[x - 2][y - 2] == ' ')
+        {
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            y--; // move left one column
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
+        }
+        break;
+    case 'd':
+        if (y < col_size - 3 && arr[x][y + 2] == ' ' && arr[x + 1][y + 2] == ' ' && arr[x - 1][y + 1] == ' ')
+        {
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            y++; // move right one column
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
+        }
+        break;
+    case 'q':
+        exit(0);
+        break;
+    default:
+        cout << "Invalid key. Use W, A, S, D to move or Q to quit." << endl;
+        break;
+    }
 }
+
 void level1Obstacles(char arr[][col_size])
 {
 	int rowstart = 3, rowend = row_size - 3;
