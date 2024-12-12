@@ -26,6 +26,8 @@ int solomonPosX, solomonPosY;
 const int ENTER = 13;
 const int KEY_DOWN = 80;
 const int KEY_UP = 72;
+const int KEY_RIGHT = 77;
+const int KEY_LEFT = 75;
 const int SPACEBAR = 32;
 const int ESCAPE = 27;
 
@@ -353,7 +355,6 @@ void ethan(char arr[][col_size])
 
 
 
-
 void initializeMap1(char map[][col_size])
 {
     for (int row = 0; row < row_size; row++)
@@ -415,83 +416,83 @@ void move(char arr[][col_size], char& direction)
 {
     switch (direction)
     {
-    case 'w': // to move up
-        if (x > 2 && arr[x - 2][y] == ' ' && arr[x - 1][y - 1] == ' ' && arr[x - 1][y + 1] == ' ')// // prevent out-of-bounds
+    case KEY_UP: // to move up
+        if (ethanposY > 2 && arr[ethanposY - 2][ethanposX] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' ')// // prevent out-of-bounds
         {
-            arr[x][y] = ' '; // clearing current position
-            arr[x][y - 1] = ' ';
-            arr[x][y + 1] = ' ';
-            arr[x - 1][y] = ' ';
-            arr[x + 1][y - 1] = ' ';
-            arr[x + 1][y + 1] = ' ';
-            x--; // move one row up 
-            arr[x][y] = '|';  // ethan at the new position
-            arr[x][y - 1] = '/';
-            arr[x][y + 1] = '\\';
-            arr[x - 1][y] = 'O';
-            arr[x + 1][y - 1] = '/';
-            arr[x + 1][y + 1] = '\\';
+            arr[ethanposY][ethanposX] = ' '; // clearing current position
+            arr[ethanposY][ethanposX - 1] = ' ';
+            arr[ethanposY][ethanposX + 1] = ' ';
+            arr[ethanposY - 1][ethanposX] = ' ';
+            arr[ethanposY + 1][ethanposX - 1] = ' ';
+            arr[ethanposY + 1][ethanposX + 1] = ' ';
+            ethanposY--; // move one row up 
+            arr[ethanposY][ethanposX] = '|';  // ethan at the new position
+            arr[ethanposY][ethanposX - 1] = '/';
+            arr[ethanposY][ethanposX + 1] = '\\';
+            arr[ethanposY - 1][ethanposX] = 'O';
+            arr[ethanposY + 1][ethanposX - 1] = '/';
+            arr[ethanposY + 1][ethanposX + 1] = '\\';
         }
         break;
-    case 's':
-        if (x < row_size - 3 && arr[x + 2][y + 1] == ' ' && arr[x + 2][y - 1] == ' ' && arr[x + 1][y] == ' ')
+    case KEY_DOWN:
+        if (ethanposY < row_size - 3 && arr[ethanposY + 2][ethanposX + 1] == ' ' && arr[ethanposY + 2][ethanposX - 1] == ' ' && arr[ethanposY + 1][ethanposX] == ' ')
         {
-            arr[x][y] = ' '; // clearing current position
-            arr[x][y - 1] = ' ';
-            arr[x][y + 1] = ' ';
-            arr[x - 1][y] = ' ';
-            arr[x + 1][y - 1] = ' ';
-            arr[x + 1][y + 1] = ' ';
-            x++; // move down one row
-            arr[x][y] = '|'; // ethan at the new position
-            arr[x][y - 1] = '/';
-            arr[x][y + 1] = '\\';
-            arr[x - 1][y] = 'O';
-            arr[x + 1][y - 1] = '/';
-            arr[x + 1][y + 1] = '\\';
+            arr[ethanposY][ethanposX] = ' '; // clearing current position
+            arr[ethanposY][ethanposX - 1] = ' ';
+            arr[ethanposY][ethanposX + 1] = ' ';
+            arr[ethanposY - 1][ethanposX] = ' ';
+            arr[ethanposY + 1][ethanposX - 1] = ' ';
+            arr[ethanposY + 1][ethanposX + 1] = ' ';
+            ethanposY++; // move down one row
+            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
+            arr[ethanposY][ethanposX - 1] = '/';
+            arr[ethanposY][ethanposX + 1] = '\\';
+            arr[ethanposY - 1][ethanposX] = 'O';
+            arr[ethanposY + 1][ethanposX - 1] = '/';
+            arr[ethanposY + 1][ethanposX + 1] = '\\';
         }
         break;
-    case 'a':
-        if (y > 2 && arr[x][y - 2] == ' ' && arr[x + 1][y - 2] == ' ' && arr[x - 2][y - 2] == ' ')
+    case KEY_RIGHT:
+        if (ethanposX > 2 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 2][ethanposX - 2] == ' ')
         {
-            arr[x][y] = ' '; // clearing current position
-            arr[x][y - 1] = ' ';
-            arr[x][y + 1] = ' ';
-            arr[x - 1][y] = ' ';
-            arr[x + 1][y - 1] = ' ';
-            arr[x + 1][y + 1] = ' ';
-            y--; // move left one column
-            arr[x][y] = '|'; // ethan at the new position
-            arr[x][y - 1] = '/';
-            arr[x][y + 1] = '\\';
-            arr[x - 1][y] = 'O';
-            arr[x + 1][y - 1] = '/';
-            arr[x + 1][y + 1] = '\\';
+            arr[ethanposY][ethanposX] = ' '; // clearing current position
+            arr[ethanposY][ethanposX - 1] = ' ';
+            arr[ethanposY][ethanposX + 1] = ' ';
+            arr[ethanposY - 1][ethanposX] = ' ';
+            arr[ethanposY + 1][ethanposX - 1] = ' ';
+            arr[ethanposY + 1][ethanposX + 1] = ' ';
+            ethanposX--; // move left one column
+            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
+            arr[ethanposY][ethanposX - 1] = '/';
+            arr[ethanposY][ethanposX + 1] = '\\';
+            arr[ethanposY - 1][ethanposX] = 'O';
+            arr[ethanposY + 1][ethanposX - 1] = '/';
+            arr[ethanposY + 1][ethanposX + 1] = '\\';
         }
         break;
-    case 'd':
-        if (y < col_size - 3 && arr[x][y + 2] == ' ' && arr[x + 1][y + 2] == ' ' && arr[x - 1][y + 1] == ' ')
+    case KEY_RIGHT:
+        if (ethanposX < col_size - 3 && arr[ethanposY][ethanposX + 2] == ' ' && arr[ethanposY + 1][ethanposX + 2] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' ')
         {
-            arr[x][y] = ' '; // clearing current position
-            arr[x][y - 1] = ' ';
-            arr[x][y + 1] = ' ';
-            arr[x - 1][y] = ' ';
-            arr[x + 1][y - 1] = ' ';
-            arr[x + 1][y + 1] = ' ';
-            y++; // move right one column
-            arr[x][y] = '|'; // ethan at the new position
-            arr[x][y - 1] = '/';
-            arr[x][y + 1] = '\\';
-            arr[x - 1][y] = 'O';
-            arr[x + 1][y - 1] = '/';
-            arr[x + 1][y + 1] = '\\';
+            arr[ethanposY][ethanposX] = ' '; // clearing current position
+            arr[ethanposY][ethanposX - 1] = ' ';
+            arr[ethanposY][ethanposX + 1] = ' ';
+            arr[ethanposY - 1][ethanposX] = ' ';
+            arr[ethanposY + 1][ethanposX - 1] = ' ';
+            arr[ethanposY + 1][ethanposX + 1] = ' ';
+            ethanposX++; // move right one column
+            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
+            arr[ethanposY][ethanposX - 1] = '/';
+            arr[ethanposY][ethanposX + 1] = '\\';
+            arr[ethanposY - 1][ethanposX] = 'O';
+            arr[ethanposY + 1][ethanposX - 1] = '/';
+            arr[ethanposY + 1][ethanposX + 1] = '\\';
         }
         break;
     case 'q':
         exit(0);
         break;
     default:
-        cout << "Invalid key. Use W, A, S, D to move or Q to quit." << endl;
+        cout << "Invalid key. Use ARROW keys to move or 'Q' to quit." << endl;
         break;
     }
 }
