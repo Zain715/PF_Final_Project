@@ -73,7 +73,6 @@ int main() {
     PrintMap();
     while (true) {
         direction = _getch();
-        direction = tolower(direction);
         system("cls");
         move(map, direction);
         trackingEthan(level);
@@ -452,7 +451,7 @@ void move(char arr[][col_size], char& direction)
             arr[ethanposY + 1][ethanposX + 1] = '\\';
         }
         break;
-    case KEY_RIGHT:
+    case KEY_LEFT:
         if (ethanposX > 2 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 2][ethanposX - 2] == ' ')
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
