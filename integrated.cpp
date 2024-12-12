@@ -354,130 +354,137 @@ void ethan(char arr[][col_size])
 
 
 
-void initializeMap1(char map[][col_size]) {
-    // Removing all garbage values
-    for (int i = 0; i < row_size;i++) {
-        for (int j = 0; j < col_size;j++) {
-            map[i][j] = ' ';
+void initializeMap1(char map[][col_size])
+{
+    for (int row = 0; row < row_size; row++)
+    {
+        for (int col = 0; col < col_size; col++)
+        {
+            map[row][col] = ' '; //removing all garbage values
+            if (col == 0 || col == col_size - 1) //adding borders to columns
+            {
+                map[row][col] = '|';
+            }
+            else if (row == 0 || row == row_size - 1) //adding borders to rows
+            {
+                map[row][col] = '-';
+            }
+            int midCol = (col_size / 2) - 5;
+            for (int col = midCol; col < midCol + 8; col++) //for adding doors on the top and bottom
+            {
+                if (row == 0 || row == row_size - 1)
+                {
+                    map[row][col] = ' ';
+                }
+            }
+
         }
-    }
-    //Adding border to columns
-    for (int j = 0; j < col_size;j++) {
-        map[0][j] = '-';
-        map[row_size - 1][j] = '-';
-    }
-    //Adding border to rows
-    for (int j = 0; j < row_size;j++) {
-        map[j][0] = '|';
-        map[j][col_size - 1] = '|';
-    }
-    // Adding doors on the top and bottom
-    int midCol = (col_size / 2) - 5;
-    for (int j = midCol; j < midCol + 8;j++) {
-        map[0][j] = ' ';
-        map[row_size - 1][j] = ' ';
     }
 }
 
-void initializeMap2(char map[][col_size]) {
-    // Removing all garbage values
-    for (int i = 0; i < row_size;i++) {
-        for (int j = 0; j < col_size;j++) {
-            map[i][j] = ' ';
+void initializeMap2(char map[][col_size])
+{
+    for (int row = 0; row < row_size; row++)
+    {
+        for (int col = 0; col < col_size; col++)
+        {
+            map[row][col] = ' '; //removing all garbage values
+            if (col == 0 || col == col_size - 1) //adding borders to columns
+            {
+                map[row][col] = '|';
+            }
+            else if (row == 0 || row == row_size - 1) //adding borders to rows
+            {
+                map[row][col] = '-';
+            }
+            int midRow = (row_size / 2) - 5;
+            for (int row = midRow; row < midRow + 8; row++) //adding doors on the top and bottom
+            {
+                if (col == 0 || col == col_size - 1)
+                {
+                    map[row][col] = ' ';
+                }
+            }
         }
     }
-    //Adding border to columns
-    for (int j = 0; j < col_size;j++) {
-        map[0][j] = '-';
-        map[row_size - 1][j] = '-';
-    }
-    //Adding border to rows
-    for (int j = 0; j < row_size;j++) {
-        map[j][0] = '|';
-        map[j][col_size - 1] = '|';
-    }
-    // Adding doors on the ledt and right
-    int midRow = (row_size / 2) - 5;
-    for (int j = midRow; j < midRow + 8;j++) {
-        map[j][0] = ' ';
-        map[j][col_size - 1] = ' ';
-    }
+
 }
 
+// ethans movement 
 void move(char arr[][col_size], char& direction)
 {
     switch (direction)
     {
     case 'w': // to move up
-        if (ethanposY > 2) // // prevent out-of-bounds
+        if (x > 2 && arr[x - 2][y] == ' ' && arr[x - 1][y - 1] == ' ' && arr[x - 1][y + 1] == ' ')// // prevent out-of-bounds
         {
-            arr[ethanposY][ethanposX] = ' '; // clearing current position
-            arr[ethanposY][ethanposX - 1] = ' ';
-            arr[ethanposY][ethanposX + 1] = ' ';
-            arr[ethanposY - 1][ethanposX] = ' ';
-            arr[ethanposY + 1][ethanposX - 1] = ' ';
-            arr[ethanposY + 1][ethanposX + 1] = ' ';
-            ethanposY--; // move one row up 
-            arr[ethanposY][ethanposX] = '|';  // ethan at the new position
-            arr[ethanposY][ethanposX - 1] = '/';
-            arr[ethanposY][ethanposX + 1] = '\\';
-            arr[ethanposY - 1][ethanposX] = 'O';
-            arr[ethanposY + 1][ethanposX - 1] = '/';
-            arr[ethanposY + 1][ethanposX + 1] = '\\';
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            x--; // move one row up 
+            arr[x][y] = '|';  // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
         }
         break;
     case 's':
-        if (ethanposY < row_size - 3)
+        if (x < row_size - 3 && arr[x + 2][y + 1] == ' ' && arr[x + 2][y - 1] == ' ' && arr[x + 1][y] == ' ')
         {
-            arr[ethanposY][ethanposX] = ' '; // clearing current position
-            arr[ethanposY][ethanposX - 1] = ' ';
-            arr[ethanposY][ethanposX + 1] = ' ';
-            arr[ethanposY - 1][ethanposX] = ' ';
-            arr[ethanposY + 1][ethanposX - 1] = ' ';
-            arr[ethanposY + 1][ethanposX + 1] = ' ';
-            ethanposY++; // move down one row
-            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
-            arr[ethanposY][ethanposX - 1] = '/';
-            arr[ethanposY][ethanposX + 1] = '\\';
-            arr[ethanposY - 1][ethanposX] = 'O';
-            arr[ethanposY + 1][ethanposX - 1] = '/';
-            arr[ethanposY + 1][ethanposX + 1] = '\\';
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            x++; // move down one row
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
         }
         break;
     case 'a':
-        if (ethanposX > 2)
+        if (y > 2 && arr[x][y - 2] == ' ' && arr[x + 1][y - 2] == ' ' && arr[x - 2][y - 2] == ' ')
         {
-            arr[ethanposY][ethanposX] = ' '; // clearing current position
-            arr[ethanposY][ethanposX - 1] = ' ';
-            arr[ethanposY][ethanposX + 1] = ' ';
-            arr[ethanposY - 1][ethanposX] = ' ';
-            arr[ethanposY + 1][ethanposX - 1] = ' ';
-            arr[ethanposY + 1][ethanposX + 1] = ' ';
-            ethanposX--; // move left one column
-            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
-            arr[ethanposY][ethanposX - 1] = '/';
-            arr[ethanposY][ethanposX + 1] = '\\';
-            arr[ethanposY - 1][ethanposX] = 'O';
-            arr[ethanposY + 1][ethanposX - 1] = '/';
-            arr[ethanposY + 1][ethanposX + 1] = '\\';
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            y--; // move left one column
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
         }
         break;
     case 'd':
-        if (ethanposX < col_size - 3)
+        if (y < col_size - 3 && arr[x][y + 2] == ' ' && arr[x + 1][y + 2] == ' ' && arr[x - 1][y + 1] == ' ')
         {
-            arr[ethanposY][ethanposX] = ' '; // clearing current position
-            arr[ethanposY][ethanposX - 1] = ' ';
-            arr[ethanposY][ethanposX + 1] = ' ';
-            arr[ethanposY - 1][ethanposX] = ' ';
-            arr[ethanposY + 1][ethanposX - 1] = ' ';
-            arr[ethanposY + 1][ethanposX + 1] = ' ';
-            ethanposX++; // move right one column
-            arr[ethanposY][ethanposX] = '|'; // ethan at the new position
-            arr[ethanposY][ethanposX - 1] = '/';
-            arr[ethanposY][ethanposX + 1] = '\\';
-            arr[ethanposY - 1][ethanposX] = 'O';
-            arr[ethanposY + 1][ethanposX - 1] = '/';
-            arr[ethanposY + 1][ethanposX + 1] = '\\';
+            arr[x][y] = ' '; // clearing current position
+            arr[x][y - 1] = ' ';
+            arr[x][y + 1] = ' ';
+            arr[x - 1][y] = ' ';
+            arr[x + 1][y - 1] = ' ';
+            arr[x + 1][y + 1] = ' ';
+            y++; // move right one column
+            arr[x][y] = '|'; // ethan at the new position
+            arr[x][y - 1] = '/';
+            arr[x][y + 1] = '\\';
+            arr[x - 1][y] = 'O';
+            arr[x + 1][y - 1] = '/';
+            arr[x + 1][y + 1] = '\\';
         }
         break;
     case 'q':
@@ -488,6 +495,7 @@ void move(char arr[][col_size], char& direction)
         break;
     }
 }
+
 void level1Obstacles(char arr[][col_size])
 {
     int rowstart = 3, rowend = row_size - 3;
