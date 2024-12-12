@@ -1,4 +1,4 @@
-//Project Details
+////Project Details
 
 //Group Members:
   // Zain Tariq         (24F-0558)
@@ -12,7 +12,6 @@
 #include <conio.h>  //to take input from keyboard
 #include <ctime>    // to get the current time in seconds for randomisation
 #include <chrono>  //to get the current time in milliseconds for randomisation of real-time processes
-
 using namespace std;
 
 // Global variables
@@ -23,6 +22,7 @@ int obstacleX = 0, obstacleY = 0; // obstacles x and y coordinates
 int m = (row_size / 2) + 2, n = row_size - 3; // m = starting point, n = end point for random function
 int EnemyPos1X, EnemyPos2X, EnemyPos3X, EnemyPos4X, EnemyPos5X, EnemyPos6X;     //ask sir if srand can produce the same number
 int EnemyPos1Y, EnemyPos2Y, EnemyPos3Y, EnemyPos4Y, EnemyPos5Y, EnemyPos6Y;
+int solomonPosX, solomonPosY;
 const int ENTER = 13;
 const int KEY_DOWN = 80;
 const int KEY_UP = 72;
@@ -45,6 +45,8 @@ void level2Obstacles(char arr[][col_size]);
 void level3Obstacles(char arr[][col_size]);
 void level4Obstacles(char arr[][col_size]);
 void level5Obstacles(char arr[][col_size]);
+bool solomonCollision(int posY, int posX);
+void initialiseSolomon(char map[][col_size]);
 void PrintMap();
 int RandomMap();
 int RandomNumber(int start, int end);
@@ -53,7 +55,10 @@ void trackingEthan(int level);
 void updatingEnemyPos(int EnemyPosX, int EnemyPosY, int enemyNumber);
 bool enemyCollision(int PosY, int PosX);
 bool ethanCollision(int PosY, int PosX);
+void updatingSolomonPos(int PosY, int PosX);
+int randomDirection();
 char direction = ' ';
+
 int main() {
     int level = 5;
     initializeRandomMap();
@@ -61,21 +66,59 @@ int main() {
     // displayMenu();                  //Called to display the menu
     level5Obstacles(map);
     initializeEnemies(map, level);
+    initialiseSolomon(map);
     ethan(map);
-    
     PrintMap();
     while (true) {
         direction = _getch();
         direction = tolower(direction);
         system("cls");
-
         move(map, direction);
         trackingEthan(level);
         PrintMap();
-        
         Sleep(100);
     }
 }
+
+//collision check for solomon
+bool solomonCollision(int posY, int posX) {
+
+    if ((collisionCheck(posY, posX)) && (collisionCheck(posY - 1, posX - 1)) && (collisionCheck(posY - 1, posX + 1)) && (collisionCheck(posY, posX - 1)) && (collisionCheck(posY, posX + 1)) && (collisionCheck(posY, posX - 3)) && (collisionCheck(posY, posX - 2)) && (collisionCheck(posY, posX + 3)) && (collisionCheck(posY, posX + 2)) && (collisionCheck(posY + 1, posX - 1)) && (collisionCheck(posY + 1, posX + 1)))
+    {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+
+// intialising solomon
+void initialiseSolomon(char map[][col_size]) {
+    int RandomRow, RandomCol;
+    int startRow = 3, endRow = row_size / 2 - 2; //ensuring bounds
+    int startCol = 4, endCol = col_size - 5; //ensuring bounds
+    srand(time(0));
+
+    do {
+        solomonPosX = RandomNumber(startCol, endCol);
+        solomonPosY = RandomNumber(startRow, endRow);
+    } while (solomonCollision(solomonPosY, solomonPosX));
+
+    // solomon
+    map[solomonPosY - 1][solomonPosX - 1] = '[';      // Top bracket
+    map[solomonPosY - 1][solomonPosX + 1] = ']';  // Top bracket (closing)
+    map[solomonPosY][solomonPosX - 1] = '[';      // Left bracket
+    map[solomonPosY][solomonPosX] = 'x';          // Center
+    map[solomonPosY][solomonPosX + 1] = ']';      // Right bracket
+    map[solomonPosY][solomonPosX - 3] = '[';
+    map[solomonPosY][solomonPosX - 2] = ']';
+    map[solomonPosY][solomonPosX + 3] = ']';
+    map[solomonPosY][solomonPosX + 2] = '[';
+    map[solomonPosY + 1][solomonPosX - 1] = '[';      // Bottom bracket
+    map[solomonPosY + 1][solomonPosX + 1] = ']';  // Bottom bracket (closing)
+}
+
 
 //Prints the title screen with the game's name
 //no parameter values
@@ -630,7 +673,83 @@ bool enemyCollision(int PosY, int PosX) {
     }
 }
 
+void updatingSolomonPos(int PosY, int PosX) {
+    int direction = randomDirection();
+    int X = PosX, Y = PosY;
+
+    map[PosY - 1][PosX - 1] = ' ';      // Top bracket
+    map[PosY - 1][PosX + 1] = ' ';  // Top bracket (closing)
+    map[PosY][PosX - 1] = ' ';      // Left bracket
+    map[PosY][PosX] = ' ';          // Center
+    map[PosY][PosX + 1] = ' ';      // Right bracket
+    map[PosY][PosX - 3] = ' ';
+    map[PosY][PosX - 2] = ' ';
+    map[PosY][PosX + 3] = ' ';
+    map[PosY][PosX + 2] = ' ';
+    map[PosY + 1][PosX - 1] = ' ';      // Bottom bracket
+    map[PosY + 1][PosX + 1] = ' ';  // Bottom bracket (closing)
+    switch (direction)
+    {
+    case 1:             //up
+        PosY--;
+        break;
+    case 2:             //down
+        PosY++;
+        break;
+    case 3:             //left
+        PosX--;
+        break;
+    case 4:             //right
+        PosX++;
+        break;
+    default:
+        break;
+    }
+    if ((!(solomonCollision(PosY, PosX)) && (PosX >= col_size - 26 && PosX <= col_size - 5) && (PosY >= row_size - 48 && PosY <= row_size - 3))) {
+
+        solomonPosY = PosY;
+        solomonPosX = PosX;
+
+        map[PosY - 1][PosX - 1] = '[';      // Top bracket
+        map[PosY - 1][PosX + 1] = ']';  // Top bracket (closing)
+        map[PosY][PosX - 1] = '[';      // Left bracket
+        map[PosY][PosX] = 'x';          // Center
+        map[PosY][PosX + 1] = ']';      // Right bracket
+        map[PosY][PosX - 3] = '[';
+        map[PosY][PosX - 2] = ']';
+        map[PosY][PosX + 3] = ']';
+        map[PosY][PosX + 2] = '[';
+        map[PosY + 1][PosX - 1] = '[';      // Bottom bracket
+        map[PosY + 1][PosX + 1] = ']';  // Bottom bracket (closing)
+    }
+    else {
+        map[Y - 1][X - 1] = '[';      // Top bracket
+        map[Y - 1][X + 1] = ']';  // Top bracket (closing)
+        map[Y][X - 1] = '[';      // Left bracket
+        map[Y][X] = 'x';          // Center
+        map[Y][X + 1] = ']';      // Right bracket
+        map[Y][X - 3] = '[';
+        map[Y][X - 2] = ']';
+        map[Y][X + 3] = ']';
+        map[Y][X + 2] = '[';
+        map[Y + 1][X - 1] = '[';      // Bottom bracket
+        map[Y + 1][X + 1] = ']';  // Bottom bracket (closing)
+    }
+
+
+}
+
+int randomDirection() {
+    int d[4] = { 1,2,3,4 };
+    srand(time(0));
+    int random = rand() % 4;
+    return d[random];
+
+}
+
 void trackingEthan(int level) {
+    updatingSolomonPos(solomonPosY, solomonPosX);
+
     for (int i = 0; i <= level;i++) {
         switch (i) {
         case 0:
@@ -658,6 +777,16 @@ void trackingEthan(int level) {
 
 void updatingEnemyPos(int EnemyPosY, int EnemyPosX, int enemyNumber) {
     int x = EnemyPosX, y = EnemyPosY;
+
+    map[y][x - 1] = ' ';
+    map[y][x] = ' ';
+    map[y][x + 1] = ' ';
+
+    map[y - 1][x - 1] = ' ';
+    map[y - 1][x] = ' ';
+    map[y - 1][x + 1] = ' ';
+
+
     if (EnemyPosX > ethanposX) {
         EnemyPosX--;
     }
@@ -670,15 +799,7 @@ void updatingEnemyPos(int EnemyPosY, int EnemyPosX, int enemyNumber) {
     else if (EnemyPosY < ethanposY) {
         EnemyPosY++;
     }
-    if(!(enemyCollision(EnemyPosY,EnemyPosX))){
-        map[y][x - 1] = ' ';
-        map[y][x] = ' ';
-        map[y][x + 1] = ' ';
-
-        map[y - 1][x - 1] = ' ';
-        map[y - 1][x] = ' ';
-        map[y - 1][x + 1] = ' ';
-
+    if (!(enemyCollision(EnemyPosY, EnemyPosX))) {
 
         map[EnemyPosY][EnemyPosX - 1] = '[';
         map[EnemyPosY][EnemyPosX] = 'V';
@@ -715,6 +836,16 @@ void updatingEnemyPos(int EnemyPosY, int EnemyPosX, int enemyNumber) {
         default:
             cout << "Error in the swtich case for Updating each Enemy pos \n";
         }
+    }
+    else {
+        map[y][x - 1] = '[';
+        map[y][x] = 'V';
+        map[y][x + 1] = ']';
+
+        map[y - 1][x - 1] = '[';
+        map[y - 1][x] = '|';
+        map[y - 1][x + 1] = ']';
+
     }
 }
 
