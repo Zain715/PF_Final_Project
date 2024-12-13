@@ -15,7 +15,7 @@
 using namespace std;
 
 // Global variables
-const int row_size = 50, col_size = 30;
+const int row_size = 20, col_size = 50;
 char map[row_size][col_size];
 int ethanposY = 0, ethanposX = 0; //ethan's torsos x,y coordinates
 int obstacleX = 0, obstacleY = 0; // obstacles x and y coordinates
@@ -63,7 +63,10 @@ bool ethanCollision(int PosY, int PosX);
 void updatingSolomonPos(int PosY, int PosX);
 void ethanShoot(char arr[][col_size], char direction);
 void bulletMovement(char swen);
+void enemyKill(int bulletY, int bulletX);
+void enemyDisappear(int posX, int posY);
 int randomDirection();
+bool doorCheck(int PosY, int PosX);
 
 char direction = ' ';
 
@@ -83,7 +86,7 @@ int main() {
         //hideCursor();
         direction = _getch();
         system("cls");
-        if(!isActive && (tolower(direction) == 'w' || tolower(direction) == 's' || tolower(direction) == 'a' || tolower(direction) == 'd'))
+        if (!isActive && (tolower(direction) == 'w' || tolower(direction) == 's' || tolower(direction) == 'a' || tolower(direction) == 'd'))
         {
             ethanShoot(map, direction);
             swen = direction;
@@ -97,107 +100,280 @@ int main() {
 }
 
 
-
-
-
-void bulletMovement(char swen) {
-    switch (swen)
-    {
-    case 'w':
-    case 'W':
-        if (collisionCheck(bulletPosY - 1, bulletPosX)) {
-            map[bulletPosY][bulletPosX] = ' ';
-            bulletPosY--;
-            map[bulletPosY][bulletPosX] = '+';
-            break;
-        }
-        else {
-            map[bulletPosY][bulletPosX] = ' ';
-            isActive = false;
-        }
-        break;
-
-    case 's':
-    case 'S':
-        if (collisionCheck(bulletPosY + 1, bulletPosX)) {
-            map[bulletPosY][bulletPosX] = ' ';
-            bulletPosY++;
-            map[bulletPosY][bulletPosX] = '+';
-            break;
-        }
-        else {
-            map[bulletPosY][bulletPosX] = ' ';
-            isActive = false;
-        }
-        break;
-
-    case 'a':
-    case'A':
-        if (collisionCheck(bulletPosY, bulletPosX - 1) && !(bulletPosX == 0)) {
-            map[bulletPosY][bulletPosX] = ' ';
-            bulletPosX--;
-            map[bulletPosY][bulletPosX] = '+';
-            break;
-        }
-        else {
-            map[bulletPosY][bulletPosX] = ' ';
-            isActive = false;
-        }
-        break;
-
-    case 'd':
-    case 'D':
-        if (collisionCheck(bulletPosY, bulletPosX + 1) && !(bulletPosX >= col_size - 1)) {
-            map[bulletPosY][bulletPosX] = ' ';
-            bulletPosX++;
-            map[bulletPosY][bulletPosX] = '+';
-            break;
-        }
-        else {
-            map[bulletPosY][bulletPosX] = ' ';
-            isActive = false;
-        }
-        break;
+bool doorCheck(int PosY, int PosX) {
+    if (((PosY >= (row_size / 2) - 5) && (PosY <= (row_size / 2) + 3)) && (PosX == 0 || PosX == col_size - 1)) {
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
-    void ethanShoot(char arr[][col_size], char direction) {
-        
-        switch (direction)
+
+void bulletMovement(char swen) {
+    if (isActive) {
+        switch (swen)
         {
-            case 'w': // Shooting upwards
-            case 'W':
-            map[ethanposY - 2][ethanposX] = '+';
-            bulletPosX = ethanposX;
-            bulletPosY = ethanposY - 2;
-            isActive = true;
+        case 'w':
+        case 'W':
+            if (collisionCheck(bulletPosY - 1, bulletPosX)) {
+                map[bulletPosY][bulletPosX] = ' ';
+                bulletPosY--;
+                map[bulletPosY][bulletPosX] = '+';
+                break;
+            }
+            else {
+                map[bulletPosY][bulletPosX] = ' ';
+                isActive = false;
+                enemyKill(bulletPosY - 1, bulletPosX);
+            }
             break;
 
-            case 's': // Shooting downwards
-            case 'S':
-            map[ethanposY + 2][ethanposX] = '+';
-            bulletPosX = ethanposX;
-            bulletPosY = ethanposY + 2;
-            isActive = true;
+        case 's':
+        case 'S':
+            if (collisionCheck(bulletPosY + 1, bulletPosX)) {
+                map[bulletPosY][bulletPosX] = ' ';
+                bulletPosY++;
+                map[bulletPosY][bulletPosX] = '+';
+                break;
+            }
+            else {
+                map[bulletPosY][bulletPosX] = ' ';
+                isActive = false;
+                enemyKill(bulletPosY + 1, bulletPosX);
+            }
             break;
 
-            case 'a': // Shooting left
-            case 'A':
-            map[ethanposY][ethanposX - 2] = '+';
-            bulletPosX = ethanposX - 2;
-            bulletPosY = ethanposY;
-            isActive = true;
+        case 'a':
+        case'A':
+            if (collisionCheck(bulletPosY, bulletPosX - 1) && !(doorCheck(bulletPosY, bulletPosX - 1))) {
+                map[bulletPosY][bulletPosX] = ' ';
+                bulletPosX--;
+                map[bulletPosY][bulletPosX] = '+';
+                break;
+            }
+            else {
+                map[bulletPosY][bulletPosX] = ' ';
+                isActive = false;
+                enemyKill(bulletPosY, bulletPosX - 1);
+            }
             break;
 
-            case 'd': // Shooting right
-            case 'D':
-            map[ethanposY][ethanposX + 2] = '+';
-            bulletPosX = ethanposX + 2;
-            bulletPosY = ethanposY;
-            isActive = true;
+        case 'd':
+        case 'D':
+            if (collisionCheck(bulletPosY, bulletPosX + 1) && !(doorCheck(bulletPosY, bulletPosX + 1))) {
+                map[bulletPosY][bulletPosX] = ' ';
+                bulletPosX++;
+                map[bulletPosY][bulletPosX] = '+';
+                break;
+            }
+            else {
+                map[bulletPosY][bulletPosX] = ' ';
+                isActive = false;
+                enemyKill(bulletPosY, bulletPosX + 1);
+            }
             break;
         }
     }
+}
+
+void enemyDisappear(int posX,int posY) {
+
+
+    if (posX == EnemyPos1X && posY == EnemyPos1Y)
+    {
+        EnemyPos1X = 0;
+        EnemyPos1Y = 0;
+        cout << "working \n";
+    }
+    else if (posX == EnemyPos2X && posY == EnemyPos2Y)
+    {
+        EnemyPos2X = 0;
+        EnemyPos2Y = 0;
+    }
+    else if (posX == EnemyPos3X && posY == EnemyPos3Y)
+    {
+        EnemyPos3X = 0;
+        EnemyPos3Y = 0;
+    }
+    else if (posX == EnemyPos4X && posY == EnemyPos4Y)
+    {
+        EnemyPos4X = 0;
+        EnemyPos4Y = 0;
+    }
+    else if (posX == EnemyPos5X && posY == EnemyPos5Y)
+    {
+        EnemyPos5X = 0;
+        EnemyPos5Y = 0;
+    }
+}
+
+void enemyKill(int contactY, int contactX) {
+    char contact = map[contactY][contactX];
+    if (map[contactY][contactX] != '|') {
+        switch (contact) {
+        case 'V':
+            map[contactY][contactX] = ' ';
+            map[contactY][contactX - 1] = ' ';
+            map[contactY][contactX + 1] = ' ';
+
+            map[contactY - 1][contactX] = ' ';
+            map[contactY - 1][contactX - 1] = ' ';
+            map[contactY - 1][contactX + 1] = ' ';
+            enemyDisappear(contactX, contactY);
+            break;
+        case '|':
+            map[contactY][contactX] = ' ';
+            map[contactY][contactX - 1] = ' ';
+            map[contactY][contactX + 1] = ' ';
+
+            map[contactY + 1][contactX] = ' ';
+            map[contactY + 1][contactX - 1] = ' ';
+            map[contactY + 1][contactX + 1] = ' ';
+            enemyDisappear(contactX, contactY - 1);
+            break;
+        case '[':
+            if (map[contactY][contactX + 1] == 'V')
+            {
+                map[contactY][contactX] = ' ';
+                map[contactY][contactX + 2] = ' ';
+                map[contactY][contactX + 1] = ' ';
+
+                map[contactY - 1][contactX] = ' ';
+                map[contactY - 1][contactX + 2] = ' ';
+                map[contactY - 1][contactX + 1] = ' ';
+                enemyDisappear(contactX + 1, contactY);
+            }
+            else if (map[contactY][contactX + 1] == '|')
+            {
+                map[contactY][contactX] = ' ';
+                map[contactY][contactX + 2] = ' ';
+                map[contactY][contactX + 1] = ' ';
+
+                map[contactY + 1][contactX] = ' ';
+                map[contactY + 1][contactX + 1] = ' ';
+                map[contactY + 1][contactX + 2] = ' ';
+                enemyDisappear(contactX + 1, contactY - 1);
+            }
+            break;
+        case ']':
+            if (map[contactY][contactX - 1] == '|')
+            {
+                map[contactY][contactX] = ' ';
+                map[contactY][contactX - 1] = ' ';
+                map[contactY][contactX - 2] = ' ';
+
+                map[contactY + 1][contactX] = ' ';
+                map[contactY + 1][contactX - 1] = ' ';
+                map[contactY + 1][contactX - 2] = ' ';
+                enemyDisappear(contactX - 1, contactY + 1);
+            }
+            else if (map[contactY][contactX - 1] == 'V')
+            {
+                map[contactY][contactX] = ' ';
+                map[contactY][contactX - 1] = ' ';
+                map[contactY][contactX - 2] = ' ';
+
+                map[contactY - 1][contactX] = ' ';
+                map[contactY - 1][contactX - 1] = ' ';
+                map[contactY - 1][contactX - 2] = ' ';
+                enemyDisappear(contactX - 1, contactY);
+            }
+            break;
+        }
+    }
+
+}
+
+// Adding enemies
+void initializeEnemies(char map[][col_size], int level) {
+    int RandomRow, RandomCol;
+    int startRow, endRow;
+    int startCol, endCol;
+    srand(time(0));     //seeding rand()
+    for (int i = 0; i <= level; i++) {     //for loop to generate number of enemies according to level
+        startRow = 2, endRow = row_size / 2 - 2;      //bound for random enemy location
+        startCol = 2, endCol = col_size - 3;
+        do {
+            RandomRow = RandomNumber(startRow, endRow);
+            RandomCol = RandomNumber(startCol, endCol);
+        } while (enemyCollision(RandomRow, RandomCol));
+        map[RandomRow][RandomCol] = 'V';
+        map[RandomRow - 1][RandomCol] = '|';
+
+        map[RandomRow - 1][RandomCol - 1] = '[';
+        map[RandomRow - 1][RandomCol + 1] = ']';
+
+        map[RandomRow][RandomCol - 1] = '[';
+        map[RandomRow][RandomCol + 1] = ']';
+
+        switch (i) {
+        case 0:
+            EnemyPos1X = RandomCol;
+            EnemyPos1Y = RandomRow;
+            break;
+        case 1:
+            EnemyPos2X = RandomCol;
+            EnemyPos2Y = RandomRow;
+            break;
+        case 2:
+            EnemyPos3X = RandomCol;
+            EnemyPos3Y = RandomRow;
+            break;
+        case 3:
+            EnemyPos4X = RandomCol;
+            EnemyPos4Y = RandomRow;
+            break;
+        case 4:
+            EnemyPos5X = RandomCol;
+            EnemyPos5Y = RandomRow;
+            break;
+        case 5:
+            EnemyPos6X = RandomCol;
+            EnemyPos6Y = RandomRow;
+
+        }
+    }
+}
+
+
+void ethanShoot(char arr[][col_size], char direction) {
+
+    switch (direction)
+    {
+    case 'w': // Shooting upwards
+    case 'W':
+        map[ethanposY - 2][ethanposX] = '+';
+        bulletPosX = ethanposX;
+        bulletPosY = ethanposY - 2;
+        isActive = true;
+        break;
+
+    case 's': // Shooting downwards
+    case 'S':
+        map[ethanposY + 2][ethanposX] = '+';
+        bulletPosX = ethanposX;
+        bulletPosY = ethanposY + 2;
+        isActive = true;
+        break;
+
+    case 'a': // Shooting left
+    case 'A':
+        map[ethanposY][ethanposX - 2] = '+';
+        bulletPosX = ethanposX - 2;
+        bulletPosY = ethanposY;
+        isActive = true;
+        break;
+
+    case 'd': // Shooting right
+    case 'D':
+        map[ethanposY][ethanposX + 2] = '+';
+        bulletPosX = ethanposX + 2;
+        bulletPosY = ethanposY;
+        isActive = true;
+        break;
+    }
+}
 
 
 
@@ -385,7 +561,7 @@ void move(char arr[][col_size], char& direction)
         }
         break;
     case KEY_LEFT:
-        if (ethanposX > 2 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 2][ethanposX - 2] == ' ')
+        if (ethanposX > 2 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' ')
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
             arr[ethanposY][ethanposX - 1] = ' ';
@@ -522,59 +698,6 @@ void level5Obstacles(char arr[][col_size])
 }
 
 
-// Adding enemies
-void initializeEnemies(char map[][col_size], int level) {
-    int RandomRow, RandomCol;
-    int startRow, endRow;
-    int startCol, endCol;
-    srand(time(0));     //seeding rand()
-    for (int i = 0; i <= level; i++) {     //for loop to generate number of enemies according to level
-        startRow = 2, endRow = row_size / 2 - 2;      //bound for random enemy location
-        startCol = 2, endCol = col_size - 3;
-        do {
-            RandomRow = RandomNumber(startRow, endRow);
-            RandomCol = RandomNumber(startCol, endCol);
-        } while (enemyCollision(RandomRow, RandomCol));
-        map[RandomRow][RandomCol] = 'V';
-        map[RandomRow - 1][RandomCol] = '|';
-
-        map[RandomRow - 1][RandomCol - 1] = '[';
-        map[RandomRow - 1][RandomCol + 1] = ']';
-
-        map[RandomRow][RandomCol - 1] = '[';
-        map[RandomRow][RandomCol + 1] = ']';
-
-        switch (i) {
-        case 0:
-            EnemyPos1X = RandomCol;
-            EnemyPos1Y = RandomRow;
-            break;
-        case 1:
-            EnemyPos2X = RandomCol;
-            EnemyPos2Y = RandomRow;
-            break;
-        case 2:
-            EnemyPos3X = RandomCol;
-            EnemyPos3Y = RandomRow;
-            break;
-        case 3:
-            EnemyPos4X = RandomCol;
-            EnemyPos4Y = RandomRow;
-            break;
-        case 4:
-            EnemyPos5X = RandomCol;
-            EnemyPos5Y = RandomRow;
-            break;
-        case 5:
-            EnemyPos6X = RandomCol;
-            EnemyPos6Y = RandomRow;
-
-        }
-    }
-}
-
-
-
 int RandomMap() {
     srand(time(0));
     int r[2] = { 1, 2 };
@@ -707,75 +830,78 @@ void trackingEthan(int level) {
 
 void updatingEnemyPos(int EnemyPosY, int EnemyPosX, int enemyNumber) {
     int x = EnemyPosX, y = EnemyPosY;
+    if (x != 0 && y != 0)
+    {
+        map[y][x - 1] = ' ';
+        map[y][x] = ' ';
+        map[y][x + 1] = ' ';
 
-    map[y][x - 1] = ' ';
-    map[y][x] = ' ';
-    map[y][x + 1] = ' ';
-
-    map[y - 1][x - 1] = ' ';
-    map[y - 1][x] = ' ';
-    map[y - 1][x + 1] = ' ';
+        map[y - 1][x - 1] = ' ';
+        map[y - 1][x] = ' ';
+        map[y - 1][x + 1] = ' ';
 
 
-    if (EnemyPosX > ethanposX) {
-        EnemyPosX--;
-    }
-    else if (EnemyPosX < ethanposX) {
-        EnemyPosX++;
-    }
-    if (EnemyPosY > ethanposY) {
-        EnemyPosY--;
-    }
-    else if (EnemyPosY < ethanposY) {
-        EnemyPosY++;
-    }
-    if (!(enemyCollision(EnemyPosY, EnemyPosX))) {
+        if (EnemyPosX > ethanposX) {
+            EnemyPosX--;
+        }
+        else if (EnemyPosX < ethanposX) {
+            EnemyPosX++;
+        }
+        if (EnemyPosY > ethanposY) {
+            EnemyPosY--;
+        }
+        else if (EnemyPosY < ethanposY) {
+            EnemyPosY++;
+        }
+        if (!(enemyCollision(EnemyPosY, EnemyPosX))) {
 
-        map[EnemyPosY][EnemyPosX - 1] = '[';
-        map[EnemyPosY][EnemyPosX] = 'V';
-        map[EnemyPosY][EnemyPosX + 1] = ']';
+            map[EnemyPosY][EnemyPosX - 1] = '[';
+            map[EnemyPosY][EnemyPosX] = 'V';
+            map[EnemyPosY][EnemyPosX + 1] = ']';
 
-        map[EnemyPosY - 1][EnemyPosX - 1] = '[';
-        map[EnemyPosY - 1][EnemyPosX] = '|';
-        map[EnemyPosY - 1][EnemyPosX + 1] = ']';
+            map[EnemyPosY - 1][EnemyPosX - 1] = '[';
+            map[EnemyPosY - 1][EnemyPosX] = '|';
+            map[EnemyPosY - 1][EnemyPosX + 1] = ']';
 
-        switch (enemyNumber) {
-        case 1:
-            EnemyPos1X = EnemyPosX;
-            EnemyPos1Y = EnemyPosY;
-            break;
-        case 2:
-            EnemyPos2X = EnemyPosX;
-            EnemyPos2Y = EnemyPosY;
-            break;
-        case 3:
-            EnemyPos3X = EnemyPosX;
-            EnemyPos3Y = EnemyPosY;
-            break;
-        case 4:
-            EnemyPos4X = EnemyPosX;
-            EnemyPos4Y = EnemyPosY;
-            break;
-        case 5:
-            EnemyPos5X = EnemyPosX;
-            EnemyPos5Y = EnemyPosY;
-            break;
-        case 6:
-            EnemyPos6X = EnemyPosX;
-            EnemyPos6Y = EnemyPosY;
+            switch (enemyNumber) {
+            case 1:
+                EnemyPos1X = EnemyPosX;
+                EnemyPos1Y = EnemyPosY;
+                break;
+            case 2:
+                EnemyPos2X = EnemyPosX;
+                EnemyPos2Y = EnemyPosY;
+                break;
+            case 3:
+                EnemyPos3X = EnemyPosX;
+                EnemyPos3Y = EnemyPosY;
+                break;
+            case 4:
+                EnemyPos4X = EnemyPosX;
+                EnemyPos4Y = EnemyPosY;
+                break;
+            case 5:
+                EnemyPos5X = EnemyPosX;
+                EnemyPos5Y = EnemyPosY;
+                break;
+            case 6:
+                EnemyPos6X = EnemyPosX;
+                EnemyPos6Y = EnemyPosY;
+
+            }
+        }
+        else {
+            map[y][x - 1] = '[';
+            map[y][x] = 'V';
+            map[y][x + 1] = ']';
+
+            map[y - 1][x - 1] = '[';
+            map[y - 1][x] = '|';
+            map[y - 1][x + 1] = ']';
 
         }
     }
-    else {
-        map[y][x - 1] = '[';
-        map[y][x] = 'V';
-        map[y][x + 1] = ']';
-
-        map[y - 1][x - 1] = '[';
-        map[y - 1][x] = '|';
-        map[y - 1][x + 1] = ']';
-
-    }
+    
 }
 
 void initializeRandomMap() {
