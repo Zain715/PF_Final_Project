@@ -11,10 +11,16 @@
 #include <conio.h>   //to take input from keyboard
 #include <ctime>     // to get the current time in seconds for randomisation
 #include <chrono>    //to get the current time in milliseconds for randomisation of real-time processes
+#include <string>
+#include <fstream>
 using namespace std;
 
 // Global variables
-int enemySpeed = 2;
+bool bulletCollision = false;
+bool isTrackingActive = false;
+int enemySpeed = 7;
+int solomonSpeed = 6;
+int speedRatio = 7;
 const int numOfEnemies = 6, ebColSize = 4;
 int ebArr[numOfEnemies][ebColSize] = {0};
 const int row_size = 20, col_size = 50;
@@ -37,6 +43,9 @@ const int KEY_RIGHT = 77;
 const int KEY_LEFT = 75;
 const int SPACEBAR = 32;
 const int ESCAPE = 27;
+int midCol = (col_size / 2) - 5;
+int midRow = (row_size / 2) - 5;
+int Random;
 
 // Function prototypes
 void displayTitle();
@@ -55,7 +64,7 @@ void level4Obstacles(char arr[][col_size]);
 void level5Obstacles(char arr[][col_size]);
 bool solomonCollision(int posY, int posX);
 void initialiseSolomon(char map[][col_size]);
-void PrintMap();
+void PrintMap(int &level);
 int RandomMap();
 int RandomNumber(int start, int end);
 bool collisionCheck(int row, int col);
@@ -73,10 +82,16 @@ void setColor(int color);
 bool doorCheck(int PosY, int PosX);
 void enemyShoot(int rowY, int colX, int enemyNumber);
 void enemyBulletMovement(int rowNum);
-void checkHealth(int &health);                                          // add this
-void displayHealth(int &health);                                        // add this
-void checkingTouchWithEthan(int ethanPosY, int ethanPosX, int &health); // add this
+void checkHealth(int &health);
+void displayHealth(int &health);
+void checkingTouchWithEthan(int ethanPosY, int ethanPosX, int &health);
 void gameOver();
+bool checkLevelUpMap(char map[row_size][col_size], int midRow, int midCol, int Random);
+void obstaclecheck(int &level);
+void highScore(string name, int score);
+void credits();
+void highScorePrint();
+bool bulletsCollision(int PosY, int PosX);
 
 int main()
 {
@@ -84,26 +99,35 @@ int main()
     int health = 3;
     int level = 1;
     char swen = 'q';
+    score = 0;
     initializeRandomMap();
-    // displayTitle();                 //Called to display the title of the game
-    // displayMenu();                  //Called to display the menu
-    // system("cls");
-    level3Obstacles(map);
+    displayTitle(); // Called to display the title of the game
+    displayMenu();  // Called to display the menu
+    system("cls");
+    setColor(04);
+    cout << "ENTER NAME: ";
+    string name;
+    cin >> name;
+    system("cls");
+    obstaclecheck(level);
     initializeEnemies(map, level);
     initialiseSolomon(map);
     ethan(map);
-
     setColor(03);
-    PrintMap();
+    PrintMap(level);
     displayHealth(health);
+    time_t currentTime = time(0);
     while (isNotOver)
     {
-        direction = _getch();
-        // system("cls");
-        if (!isActive && (tolower(direction) == 'w' || tolower(direction) == 's' || tolower(direction) == 'a' || tolower(direction) == 'd'))
+        if (_kbhit())
         {
-            ethanShoot(map, direction);
-            swen = direction;
+            direction = _getch();
+            if (!isActive && (tolower(direction) == 'w' || tolower(direction) == 's' || tolower(direction) == 'a' || tolower(direction) == 'd'))
+            {
+                ethanShoot(map, direction);
+                swen = direction;
+            }
+            move(map, direction);
         }
         bulletMovement(swen);
         for (int i = 0; i < numOfEnemies; i++)
@@ -113,16 +137,76 @@ int main()
                 enemyBulletMovement(i);
             }
         }
-        move(map, direction);
+        bulletCollision = false;
         trackingEthan(level);
-        enemySpeed++;
-        // checkingTouchWithEthan(ethanposY, ethanposX, health); //add this here
+        // checkingTouchWithEthan(ethanposY, ethanposX, health);
+        if (checkLevelUpMap(map, midRow, midCol, Random))
+        {
+            if (level < 5)
+            {
+                speedRatio--;
+                enemySpeed--;
+                level++;
+                score = score + 5;
+                health = 3;
+                cout << "Level Up! Current Level: " << level << endl;
+                system("cls");         // Clears the screen
+                initializeRandomMap(); // Reinitialize the map for the new level
+                obstaclecheck(level);
+                initializeEnemies(map, level);
+                initialiseSolomon(map);
+                ethan(map);
+            }
+            else
+            {
+                break;
+            }
+        }
+        time_t lastUpdate = time(0);
+        if ((lastUpdate - currentTime) == 10)
+        {
+            score = score + 1;
+            currentTime = lastUpdate;
+        }
         setColor(03);
-        PrintMap();
-        // displayHealth(health);
-        // Sleep(99);
+        PrintMap(level);
+        displayHealth(health);
+        Sleep(99);
+        enemySpeed++;
     }
     gameOver();
+    highScore(name, score);
+}
+
+void highScore(string name, int score)
+{
+
+    ofstream scoreFile("highScore.txt", ios::app);
+    if (scoreFile.is_open())
+    {
+        scoreFile << name << "       " << score << endl;
+        scoreFile.close(); // close the file
+    }
+}
+
+void highScorePrint()
+{
+    system("cls");
+    ifstream fin;
+    fin.open("highscore.txt");
+    string name;
+    int Hscore;
+    while (fin >> name >> Hscore)
+    {
+        setColor(03);
+        cout << name << "     " << Hscore << endl;
+    }
+    fin.close();
+    setColor(0x0F); // Sets text colour to brilliant white
+    cout << "Press any key to return to main menu . . . ";
+    setColor(0x07);
+
+    _getch();
 }
 
 void setColor(int color)
@@ -141,17 +225,7 @@ void checkHealth(int &health)
 }
 void displayHealth(int &health)
 {
-    cout << R"(
-  ??????????????????????????????????????????????????????????????
-  ?                                                            ?
-  ?                                                            ?
-         Health: )";
-    cout << health;
-    cout << R"(                                
-  ?                                                            ?
-  ?                                                            ?
-  ??????????????????????????????????????????????????????????????
-)";
+    cout << "Health: " << health;
 
     /*cout << "Health: " << health << endl; // Display health in top-left corner*/
 }
@@ -178,7 +252,7 @@ void checkingTouchWithEthan(int ethanPosY, int ethanPosX, int &health)
 
 bool doorCheck(int PosY, int PosX)
 {
-    if (((PosY >= (row_size / 2) - 5) && (PosY <= (row_size / 2) + 3)) && (PosX == 0 || PosX == col_size - 1))
+    if ((((PosY >= (row_size / 2) - 5) && (PosY <= (row_size / 2) + 3)) && (PosX == 0 || PosX == col_size - 1)) || (PosX >= (col_size / 2) - 5 && (PosX <= (col_size / 2 + 3)) && (PosY == 0 || PosY == row_size - 1)))
     {
         return true;
     }
@@ -195,7 +269,7 @@ void enemyBulletMovement(int rowNum)
     switch (ebArr[rowNum][3])
     {
     case 'w':
-        if (collisionCheck(PosY - 1, PosX))
+        if (collisionCheck(PosY - 1, PosX) && !bulletsCollision(PosY - 2, PosX) && !bulletCollision)
         {
             map[PosY][PosX] = ' ';
             PosY--;
@@ -213,7 +287,7 @@ void enemyBulletMovement(int rowNum)
         break;
 
     case 's':
-        if (collisionCheck(PosY + 1, PosX))
+        if (collisionCheck(PosY + 1, PosX) && !bulletsCollision(PosY + 2, PosX) && !bulletCollision)
         {
             map[PosY][PosX] = ' ';
             PosY++;
@@ -231,7 +305,7 @@ void enemyBulletMovement(int rowNum)
         break;
 
     case 'a':
-        if (collisionCheck(PosY, PosX - 1) && !(doorCheck(PosY, PosX - 1)))
+        if (collisionCheck(PosY, PosX - 1) && !(doorCheck(PosY, PosX - 1)) && !bulletsCollision(PosY, PosX - 2) && !bulletCollision)
         {
             map[PosY][PosX] = ' ';
             PosX--;
@@ -249,7 +323,7 @@ void enemyBulletMovement(int rowNum)
         break;
 
     case 'd':
-        if (collisionCheck(PosY, PosX + 1) && !(doorCheck(PosY, PosX + 1)))
+        if (collisionCheck(PosY, PosX + 1) && !(doorCheck(PosY, PosX + 1)) && !bulletsCollision(PosY, PosX + 2) && !bulletCollision)
         {
             map[PosY][PosX] = ' ';
             PosX++;
@@ -276,7 +350,7 @@ void bulletMovement(char swen)
         {
         case 'w':
         case 'W':
-            if (collisionCheck(bulletPosY - 1, bulletPosX))
+            if (collisionCheck(bulletPosY - 1, bulletPosX) && !(doorCheck(bulletPosY - 1, bulletPosX)) && !bulletsCollision(bulletPosY - 2, bulletPosX) && !bulletCollision)
             {
                 map[bulletPosY][bulletPosX] = ' ';
                 bulletPosY--;
@@ -293,7 +367,7 @@ void bulletMovement(char swen)
 
         case 's':
         case 'S':
-            if (collisionCheck(bulletPosY + 1, bulletPosX))
+            if (collisionCheck(bulletPosY + 1, bulletPosX) && !(doorCheck(bulletPosY + 1, bulletPosX)) && !bulletsCollision(bulletPosY + 2, bulletPosX) && !bulletCollision)
             {
                 map[bulletPosY][bulletPosX] = ' ';
                 bulletPosY++;
@@ -310,7 +384,7 @@ void bulletMovement(char swen)
 
         case 'a':
         case 'A':
-            if (collisionCheck(bulletPosY, bulletPosX - 1) && !(doorCheck(bulletPosY, bulletPosX - 1)))
+            if (collisionCheck(bulletPosY, bulletPosX - 1) && !(doorCheck(bulletPosY, bulletPosX - 1)) && !bulletsCollision(bulletPosY, bulletPosX - 2) && !bulletCollision)
             {
                 map[bulletPosY][bulletPosX] = ' ';
                 bulletPosX--;
@@ -327,7 +401,7 @@ void bulletMovement(char swen)
 
         case 'd':
         case 'D':
-            if (collisionCheck(bulletPosY, bulletPosX + 1) && !(doorCheck(bulletPosY, bulletPosX + 1)))
+            if (collisionCheck(bulletPosY, bulletPosX + 1) && !(doorCheck(bulletPosY, bulletPosX + 1)) && !bulletsCollision(bulletPosY, bulletPosX + 2) && !bulletCollision)
             {
                 map[bulletPosY][bulletPosX] = ' ';
                 bulletPosX++;
@@ -378,7 +452,8 @@ void enemyDisappear(int posX, int posY)
         EnemyPos6X = 0;
         EnemyPos6Y = 0;
     }
-    score = score + 10;
+
+    score = score + 2;
 }
 
 void enemyShoot(int rowY, int colX, int enemyNumber)
@@ -658,8 +733,8 @@ void initialiseSolomon(char map[][col_size])
 
 void ethan(char arr[][col_size])
 {
-    int rowstart = m, rowend = n;
-    int colstart = 3, colend = col_size - 3;
+    int rowstart = m + 1, rowend = n - 1;
+    int colstart = 4, colend = col_size - 4;
 
     do
     {
@@ -736,7 +811,7 @@ void initializeMap2(char map[][col_size])
     }
 }
 
-void PrintMap()
+void PrintMap(int &level)
 {
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), {0});
     for (int i = 0; i < row_size; i++)
@@ -748,15 +823,37 @@ void PrintMap()
         cout << endl;
     }
     cout << "Score: " << score << endl;
+    cout << "Level: " << level << endl;
+}
+int RandomMap()
+{
+    srand(time(0));
+    int r[2] = {1, 2};
+    int l = rand() % (2);
+    Random = r[l];
+    return Random;
+}
+
+void initializeRandomMap()
+{
+    Random = RandomMap();
+    if (Random == 1)
+    {
+        initializeMap1(map);
+    }
+    else if (Random == 2)
+    {
+        initializeMap2(map);
+    }
 }
 
 // ethans movement
-void move(char arr[][col_size], char &direction)
+void move(char arr[][col_size], char &direction) // edit the if conditions of ethans movement (just remove the old one and add this)
 {
     switch (direction)
     {
-    case KEY_UP:                                                                                                                                           // to move up
-        if (ethanposY > 2 && arr[ethanposY - 2][ethanposX] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' ') // // prevent out-of-bounds
+    case KEY_UP:                                                                                                                                                                                                                                                                                                                   // to move up
+        if (((doorCheck(ethanposY - 2, ethanposX) && (arr[ethanposY - 2][ethanposX] == ' ')) || (doorCheck(ethanposY - 1, ethanposX) && arr[ethanposY - 1][ethanposX] == ' ')) || (ethanposY > 2 && arr[ethanposY - 2][ethanposX] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' ')) // // prevent out-of-bounds
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
             arr[ethanposY][ethanposX - 1] = ' ';
@@ -774,7 +871,7 @@ void move(char arr[][col_size], char &direction)
         }
         break;
     case KEY_DOWN:
-        if (ethanposY < row_size - 3 && arr[ethanposY + 2][ethanposX + 1] == ' ' && arr[ethanposY + 2][ethanposX - 1] == ' ' && arr[ethanposY + 1][ethanposX] == ' ')
+        if (((doorCheck(ethanposY + 2, ethanposX) && arr[ethanposY + 2][ethanposX] == ' ') || (doorCheck(ethanposY + 1, ethanposX) && arr[ethanposY + 1][ethanposX])) || (ethanposY < row_size - 3 && arr[ethanposY + 2][ethanposX + 1] == ' ' && arr[ethanposY + 2][ethanposX - 1] == ' ' && arr[ethanposY + 1][ethanposX] == ' '))
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
             arr[ethanposY][ethanposX - 1] = ' ';
@@ -792,7 +889,7 @@ void move(char arr[][col_size], char &direction)
         }
         break;
     case KEY_LEFT:
-        if (ethanposX > 2 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' ')
+        if (((doorCheck(ethanposY, ethanposX - 3) && arr[ethanposY][ethanposX - 3] == ' ') || (doorCheck(ethanposY, ethanposX - 2) && arr[ethanposY][ethanposX - 2] == ' ')) || (ethanposX > 3 && arr[ethanposY][ethanposX - 2] == ' ' && arr[ethanposY + 1][ethanposX - 2] == ' ' && arr[ethanposY - 1][ethanposX - 1] == ' '))
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
             arr[ethanposY][ethanposX - 1] = ' ';
@@ -810,7 +907,7 @@ void move(char arr[][col_size], char &direction)
         }
         break;
     case KEY_RIGHT:
-        if (ethanposX < col_size - 3 && arr[ethanposY][ethanposX + 2] == ' ' && arr[ethanposY + 1][ethanposX + 2] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' ')
+        if (((doorCheck(ethanposY, ethanposX + 3) && arr[ethanposY][ethanposX + 3] == ' ') || (doorCheck(ethanposY, ethanposX + 2) && arr[ethanposY][ethanposX + 2] == ' ')) || (ethanposX < col_size - 4 && arr[ethanposY][ethanposX + 2] == ' ' && arr[ethanposY + 1][ethanposX + 2] == ' ' && arr[ethanposY - 1][ethanposX + 1] == ' '))
         {
             arr[ethanposY][ethanposX] = ' '; // clearing current position
             arr[ethanposY][ethanposX - 1] = ' ';
@@ -831,7 +928,7 @@ void move(char arr[][col_size], char &direction)
         isNotOver = false;
         break;
     default:
-        // cout << "Invalid key. Use ARROW keys to move or 'Q' to quit." << endl;
+
         break;
     }
 }
@@ -927,14 +1024,28 @@ void level5Obstacles(char arr[][col_size])
         arr[obstacleX][obstacleY + 4] = ']';
     }
 }
-
-int RandomMap()
+void obstaclecheck(int &level)
 {
-    srand(time(0));
-    int r[2] = {1, 2};
-    int l = rand() % (2);
-    int Random = r[l];
-    return Random;
+    if (level == 1)
+    {
+        level1Obstacles(map);
+    }
+    else if (level == 2)
+    {
+        level2Obstacles(map);
+    }
+    else if (level == 3)
+    {
+        level3Obstacles(map);
+    }
+    else if (level == 4)
+    {
+        level4Obstacles(map);
+    }
+    else if (level == 5)
+    {
+        level5Obstacles(map);
+    }
 }
 
 int RandomNumber(int start, int end)
@@ -969,7 +1080,7 @@ bool enemyCollision(int PosY, int PosX)
 
 void updatingSolomonPos(int PosY, int PosX)
 {
-    if ((enemySpeed % 2 == 0) || ((solomonCollision(PosY, PosX)) && (PosX >= col_size - 26 && PosX <= col_size - 5) && (PosY >= row_size - 48 && PosY <= row_size - 3)))
+    if ((solomonCollision(PosY, PosX)) && (PosX >= col_size - 26 && PosX <= col_size - 5) && (PosY >= row_size - 48 && PosY <= row_size - 3))
     {
         int direction = randomDirection();
         int X = PosX, Y = PosY;
@@ -1002,7 +1113,6 @@ void updatingSolomonPos(int PosY, int PosX)
         }
         if ((!(solomonCollision(PosY, PosX)) && (PosX >= col_size - 26 && PosX <= col_size - 5) && (PosY >= row_size - 48 && PosY <= row_size - 3)))
         {
-
             solomonPosY = PosY;
             solomonPosX = PosX;
 
@@ -1045,11 +1155,11 @@ int randomDirection()
 
 void trackingEthan(int level)
 {
-    // if (enemySpeed % 3 == 0) {
-    updatingSolomonPos(solomonPosY, solomonPosX);
-    //}
-
-    if (enemySpeed % 4 == 0)
+    if (enemySpeed % solomonSpeed == 0)
+    {
+        updatingSolomonPos(solomonPosY, solomonPosX);
+    }
+    if (enemySpeed % speedRatio == 0)
     {
         for (int i = 0; i <= level; i++)
         {
@@ -1164,19 +1274,6 @@ void updatingEnemyPos(int EnemyPosY, int EnemyPosX, int enemyNumber)
     }
 }
 
-void initializeRandomMap()
-{
-    int Random = RandomMap();
-    if (Random == 1)
-    {
-        initializeMap1(map);
-    }
-    else if (Random == 2)
-    {
-        initializeMap2(map);
-    }
-}
-
 bool ethanCollision(int PosY, int PosX)
 {
     if ((collisionCheck(PosY, PosX)) && (collisionCheck(PosY - 1, PosX)) && (collisionCheck(PosY, PosX - 1)) && (collisionCheck(PosY, PosX + 1)) && (collisionCheck(PosY, PosX - 1)) && (collisionCheck(PosY + 1, PosX - 1)) && (collisionCheck(PosY + 1, PosX + 1)))
@@ -1189,13 +1286,29 @@ bool ethanCollision(int PosY, int PosX)
     }
 }
 
+void credits()
+{
+    system("cls");
+    setColor(03);
+    cout << "Here is some information about us :)";
+    cout << endl
+         << endl;
+    cout << "This project was brought to life by Ammar, Zain, and Sania as part of our Programming Fundamentals course. \nAmmar Nadeem | 24F-0733 \nZain Tariq | 24F-0558 \nSania Basharat | 24F-0546\n";
+    setColor(0x07); // Resets text colour
+    cout << endl;
+    setColor(0x0F); // Sets text colour to brilliant white
+    cout << "Press any key to return to main menu . . . ";
+    setColor(0x07);
+    _getch();
+}
+
 // Prints the title screen with the game's name
 // no parameter values
 // no return value
 
 void displayTitle()
 {
-    setColor(0x05);
+    setColor(0x04);
     cout << R"(
   _______ _________ _______  _______ _________ _______  _            _________ _______  _______  _______  _______  _______ _________ ______   _        _______ 
  (       )\__   __/(  ____ \(  ____ \\__   __/(  ___  )( (    /|     \__   __/(       )(  ____ )(  ___  )(  ____ \(  ____ \\__   __/(  ___ \ ( \      (  ____ \
@@ -1222,17 +1335,17 @@ void displayHelp()
     setColor(0x03); // This is how the following text's colour is set. Sets text colour to aqua
     cout << "Here is some information for the game :\n"
          << endl;
-    cout << "1. Use the \"UP\" key to move up and the \"DOWN\" key to move down.\n"
+    cout << "1. Use the 'ARROW' keys to move.\n"
          << endl;
-    cout << "2. Use \"spacebar\" to fire the plasma cannon.\n"
+    cout << "2. Use 'W', 'A', 'S', 'D' to fire at enemies.\n"
          << endl;
-    cout << "3. \"+\" denotes the unbreakable walls and \"0\" denotes the asteroid.\n"
+    cout << "3. Kill or dodge enemies, and Solomon to pass through doors and get to the next level.\n"
          << endl;
-    cout << "4. You have three hearts in total. \"Head-on collision\" OR \"Side-on collision\" with either walls will cost you one heart. \n"
+    cout << "4. You have three lives in total. Collision with enemy, Solomon, obstacles, and walls will cost you 1 life. \n"
          << endl;
-    cout << "5. You will receive \"1000\" points if you destroy one asteroid.\n"
+    cout << "5. You will receive 1 point every ten seconds, 5 points for passing each level, and 2 points for killing an enemy.\n"
          << endl;
-    cout << "6. Choose your difficulty wisely. Enjoy playing! :)\n"
+    cout << "6. Enjoy playing! :)\n"
          << endl;
     setColor(0x07); // Resets text colour
 
@@ -1260,35 +1373,56 @@ void displayMenu()
             // inversion of order is due to order of numbering being diff from order
         case 1:
         {
-            setColor(0x04);
+            setColor(0x05);
             cout << R"(
-    _____   _                    _        _____                            
-   / ____| | |                  | |      / ____|                           
-  | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
-   \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-   ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
-  |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
+      _____   _                    _        _____                            
+     / ____| | |                  | |      / ____|                           
+    | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
+     \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+     ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
+    |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
 
 
  )" << endl;
             setColor(0x07);
             cout << R"(
-   _    _          _         
-  | |  | |        | |        
-  | |__| |   ___  | |  _ __  
-  |  __  |  / _ \ | | | '_ \ 
-  | |  | | |  __/ | | | |_) |
-  |_|  |_|  \___| |_| | .__/ 
-                      | |    
-                      |_|    
+     _    _          _         
+    | |  | |        | |        
+    | |__| |   ___  | |  _ __  
+    |  __  |  / _ \ | | | '_ \ 
+    | |  | | |  __/ | | | |_) |
+    |_|  |_|  \___| |_| | .__/ 
+                        | |    
+                        |_|    
  )" << endl;
+
             cout << R"(
-   ______          _   _        _____                            
-  |  ____|        (_) | |      / ____|                           
-  | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
-  |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-  | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
-  |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
+     _    _ _       _        _____                    
+    | |  | (_)     | |      / ____|                   
+    | |__| |_  __ _| |__   | (___   ___ ___  _ __ ___ 
+    |  __  | |/ _` | '_ \   \___ \ / __/ _ \| '__/ _ \
+    | |  | | | (_| | | | |  ____) | (_| (_) | | |  __/
+    |_|  |_|_|\__, |_| |_| |_____/ \___\___/|_|  \___|
+               __/ |                                  
+              |___/                                   
+)" << endl;
+            cout << R"(
+     _____              _ _ _       
+    /  __ \            | (_) |      
+    | /  \/_ __ ___  __| |_| |_ ___ 
+    | |   | '__/ _ \/ _` | | __/ __|
+    | \__/\ | |  __/ (_| | | |_\__ \
+     \____/_|  \___|\__,_|_|\__|___/
+                                
+                                
+)";
+            cout << R"(
+     ______          _   _        _____                            
+    |  ____|        (_) | |      / ____|                           
+    | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
+    |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+    | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
+    |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
  )" << endl;
             setColor(0x0F);
             cout << "Navigate using the up and down arrow keys. Press the enter key to select an option . . . ";
@@ -1299,35 +1433,56 @@ void displayMenu()
         case 2:
         {
             cout << R"(
-    _____   _                    _        _____                            
-   / ____| | |                  | |      / ____|                           
-  | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
-   \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-   ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
-  |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
+      _____   _                    _        _____                            
+     / ____| | |                  | |      / ____|                           
+    | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
+     \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+     ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
+    |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
 
 
  )" << endl;
 
             setColor(0x0E);
             cout << R"(
-   _    _          _         
-  | |  | |        | |        
-  | |__| |   ___  | |  _ __  
-  |  __  |  / _ \ | | | '_ \ 
-  | |  | | |  __/ | | | |_) |
-  |_|  |_|  \___| |_| | .__/ 
-                      | |    
-                      |_|    
+     _    _          _         
+    | |  | |        | |        
+    | |__| |   ___  | |  _ __  
+    |  __  |  / _ \ | | | '_ \ 
+    | |  | | |  __/ | | | |_) |
+    |_|  |_|  \___| |_| | .__/ 
+                        | |    
+                        |_|    
  )" << endl;
             setColor(0x07);
             cout << R"(
-   ______          _   _        _____                            
-  |  ____|        (_) | |      / ____|                           
-  | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
-  |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-  | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
-  |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
+     _    _ _       _        _____                    
+    | |  | (_)     | |      / ____|                   
+    | |__| |_  __ _| |__   | (___   ___ ___  _ __ ___ 
+    |  __  | |/ _` | '_ \   \___ \ / __/ _ \| '__/ _ \
+    | |  | | | (_| | | | |  ____) | (_| (_) | | |  __/
+    |_|  |_|_|\__, |_| |_| |_____/ \___\___/|_|  \___|
+               __/ |                                  
+              |___/                                   
+)" << endl;
+            cout << R"(
+     _____              _ _ _       
+    /  __ \            | (_) |      
+    | /  \/_ __ ___  __| |_| |_ ___ 
+    | |   | '__/ _ \/ _` | | __/ __|
+    | \__/\ | |  __/ (_| | | |_\__ \
+     \____/_|  \___|\__,_|_|\__|___/
+                                
+                                
+)";
+
+            cout << R"(
+     ______          _   _        _____                            
+    |  ____|        (_) | |      / ____|                           
+    | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
+    |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+    | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
+    |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
  )" << endl;
             setColor(0x0F);
             cout << "Navigate using the up and down arrow keys. Press the enter key to select an option . . . ";
@@ -1337,33 +1492,175 @@ void displayMenu()
         case 3:
         {
             cout << R"(
-    _____   _                    _        _____                            
-   / ____| | |                  | |      / ____|                           
-  | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
-   \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-   ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
-  |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
+      _____   _                    _        _____                            
+     / ____| | |                  | |      / ____|                           
+    | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
+     \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+     ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
+    |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
 
 
  )" << endl;
             cout << R"(
-   _    _          _         
-  | |  | |        | |        
-  | |__| |   ___  | |  _ __  
-  |  __  |  / _ \ | | | '_ \ 
-  | |  | | |  __/ | | | |_) |
-  |_|  |_|  \___| |_| | .__/ 
-                      | |    
-                      |_|    
+     _    _          _         
+    | |  | |        | |        
+    | |__| |   ___  | |  _ __  
+    |  __  |  / _ \ | | | '_ \ 
+    | |  | | |  __/ | | | |_) |
+    |_|  |_|  \___| |_| | .__/ 
+                        | |    
+                        |_|    
  )" << endl;
+            setColor(06);
+            cout << R"(
+     _    _ _       _        _____                    
+    | |  | (_)     | |      / ____|                   
+    | |__| |_  __ _| |__   | (___   ___ ___  _ __ ___ 
+    |  __  | |/ _` | '_ \   \___ \ / __/ _ \| '__/ _ \
+    | |  | | | (_| | | | |  ____) | (_| (_) | | |  __/
+    |_|  |_|_|\__, |_| |_| |_____/ \___\___/|_|  \___|
+               __/ |                                  
+              |___/                                   
+)" << endl;
+            setColor(0x07);
+            cout << R"(
+     _____              _ _ _       
+    /  __ \            | (_) |      
+    | /  \/_ __ ___  __| |_| |_ ___ 
+    | |   | '__/ _ \/ _` | | __/ __|
+    | \__/\ | |  __/ (_| | | |_\__ \
+     \____/_|  \___|\__,_|_|\__|___/
+                                
+                                
+)";
+
+            cout << R"(
+     ______          _   _        _____                            
+    |  ____|        (_) | |      / ____|                           
+    | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
+    |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+    | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
+    |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
+ )" << endl;
+
+            ;
+            setColor(0x0F);
+            ;
+            cout << "Navigate using the up and down arrow keys. Press the enter key to select an option . . . ";
+            setColor(0x07);
+        }
+        break;
+        case 4:
+        {
+
+            cout << R"(
+      _____   _                    _        _____                            
+     / ____| | |                  | |      / ____|                           
+    | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
+     \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+     ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
+    |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
+
+
+ )" << endl;
+
+            cout << R"(
+     _    _          _         
+    | |  | |        | |        
+    | |__| |   ___  | |  _ __  
+    |  __  |  / _ \ | | | '_ \ 
+    | |  | | |  __/ | | | |_) |
+    |_|  |_|  \___| |_| | .__/ 
+                        | |    
+                        |_|    
+ )" << endl;
+
+            cout << R"(
+     _    _ _       _        _____                    
+    | |  | (_)     | |      / ____|                   
+    | |__| |_  __ _| |__   | (___   ___ ___  _ __ ___ 
+    |  __  | |/ _` | '_ \   \___ \ / __/ _ \| '__/ _ \
+    | |  | | | (_| | | | |  ____) | (_| (_) | | |  __/
+    |_|  |_|_|\__, |_| |_| |_____/ \___\___/|_|  \___|
+               __/ |                                  
+              |___/                                   
+)" << endl;
+            setColor(05);
+            cout << R"(
+     _____              _ _ _       
+    /  __ \            | (_) |      
+    | /  \/_ __ ___  __| |_| |_ ___ 
+    | |   | '__/ _ \/ _` | | __/ __|
+    | \__/\ | |  __/ (_| | | |_\__ \
+     \____/_|  \___|\__,_|_|\__|___/
+                                
+                                
+)";
+            setColor(0x07);
+            cout << R"(
+     ______          _   _        _____                            
+    |  ____|        (_) | |      / ____|                           
+    | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
+    |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+    | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
+    |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
+ )" << endl;
+            setColor(0x0F);
+            cout << "Navigate using the up and down arrow keys. Press the enter key to select an option . . . ";
+            setColor(0x07);
+        }
+        break;
+        case 5:
+        {
+            cout << R"(
+      _____   _                    _        _____                            
+     / ____| | |                  | |      / ____|                           
+    | (___   | |_    __ _   _ __  | |_    | |  __    __ _   _ __ ___     ___ 
+     \___ \  | __|  / _` | | '__| | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+     ____) | | |_  | (_| | | |    | |_    | |__| | | (_| | | | | | | | |  __/
+    |_____/   \__|  \__,_| |_|     \__|    \_____|  \__,_| |_| |_| |_|  \___|
+
+
+ )" << endl;
+            cout << R"(
+     _    _          _         
+    | |  | |        | |        
+    | |__| |   ___  | |  _ __  
+    |  __  |  / _ \ | | | '_ \ 
+    | |  | | |  __/ | | | |_) |
+    |_|  |_|  \___| |_| | .__/ 
+                        | |    
+                        |_|    
+ )" << endl;
+
+            cout << R"(
+     _    _ _       _        _____                    
+    | |  | (_)     | |      / ____|                   
+    | |__| |_  __ _| |__   | (___   ___ ___  _ __ ___ 
+    |  __  | |/ _` | '_ \   \___ \ / __/ _ \| '__/ _ \
+    | |  | | | (_| | | | |  ____) | (_| (_) | | |  __/
+    |_|  |_|_|\__, |_| |_| |_____/ \___\___/|_|  \___|
+               __/ |                                  
+              |___/                                   
+)" << endl;
+            cout << R"(
+     _____              _ _ _       
+    /  __ \            | (_) |      
+    | /  \/_ __ ___  __| |_| |_ ___ 
+    | |   | '__/ _ \/ _` | | __/ __|
+    | \__/\ | |  __/ (_| | | |_\__ \
+     \____/_|  \___|\__,_|_|\__|___/
+                                
+                                
+)";
             setColor(0x09);
             cout << R"(
-   ______          _   _        _____                            
-  |  ____|        (_) | |      / ____|                           
-  | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
-  |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
-  | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
-  |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
+     ______          _   _        _____                            
+    |  ____|        (_) | |      / ____|                           
+    | |__    __  __  _  | |_    | |  __    __ _   _ __ ___     ___ 
+    |  __|   \ \/ / | | | __|   | | |_ |  / _` | | '_ ` _ \   / _ \
+    | |____   >  <  | | | |_    | |__| | | (_| | | | | | | | |  __/
+    |______| /_/\_\ |_|  \__|    \_____|  \__,_| |_| |_| |_|  \___|
  )" << endl;
             setColor(0x07);
             ;
@@ -1376,7 +1673,7 @@ void displayMenu()
 
         keyhit = _getch();
 
-        if ((keyhit == KEY_DOWN) && (choice < 3)) // to validate any change upon pressing the down key when in main menu
+        if ((keyhit == KEY_DOWN) && (choice < 5)) // to validate any change upon pressing the down key when in main menu
         {
             choice++;
         }
@@ -1400,6 +1697,16 @@ void displayMenu()
             }
             break;
             case 3:
+            {
+                highScorePrint();
+            }
+            break;
+            case 4:
+            {
+                credits();
+            }
+            break;
+            case 5:
             {
                 exit(0);
             }
@@ -1450,5 +1757,61 @@ void gameOver()
     else
     {
         return;
+    }
+}
+bool checkLevelUpMap(char map[row_size][col_size], int midRow, int midCol, int Random)
+{
+    if (Random == 2)
+    {
+        // Check the left door
+        for (int row = midRow; row < midRow + 8; row++)
+        {
+            if (map[row][0] != ' ')
+            {
+                return true; // Level up condition met
+            }
+        }
+        // Check the right door
+        for (int row = midRow; row < midRow + 8; row++)
+        {
+            if (map[row][col_size - 1] != ' ')
+            {
+                return true; // Level up condition met
+            }
+        }
+        return false; // No level-up condition met
+    }
+    else if (Random == 1)
+    {
+        // Check the top door
+        for (int col = midCol; col < midCol + 8; col++)
+        {
+            if (map[0][col] != ' ')
+            {
+                return true; // Level up condition met
+            }
+        }
+        // Check the bottom door
+        for (int col = midCol; col < midCol + 8; col++)
+        {
+            if (map[row_size - 1][col] != ' ')
+            {
+                return true; // Level up condition met
+            }
+        }
+        return false; // No level up condition met
+    }
+}
+
+bool bulletsCollision(int PosY, int PosX)
+{
+    if (map[PosY][PosX] == '*' || map[PosY][PosX] == '+')
+    {
+        bulletCollision = true;
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
